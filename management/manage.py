@@ -12,7 +12,7 @@ def _load_model(request):
         '.sav', 'rb'
     ))
 
-def model_info(request):
+def model_parameters(request):
     model = _load_model(request)
 
     return json.loads('{' + str(model) \
