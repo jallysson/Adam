@@ -1,5 +1,4 @@
 from sklearn import svm
-import pickle
 
 clf = svm.SVC()
 
