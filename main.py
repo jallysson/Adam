@@ -11,7 +11,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def up():
-	return 'DARK UP'
+	return 'Adam up'
 
 @app.route('/model_training', methods=['POST'])
 def _get_model_training():
