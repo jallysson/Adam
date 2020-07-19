@@ -1,0 +1,54 @@
+import sys
+sys.path.append('..')
+import json
+import pickle
+import pandas as pd
+from algorithms.classification.svm import training
+
+def _load_model(request):
+    return pickle.load(open(
+        'models/{}/{}/{}.sav'.format(
+            request.json.get('typeLearning'),
+            request.json.get('model'),
+            request.json.get('modelName')
+        ),'rb')
+    )
+
+def model_parameters(request):
+    model = _load_model(request)
+    request.json['parameters'] = json.loads('{' + str(model) \
+        .replace('SVC(', '"') \
+        .replace(')', '"') \
+        .replace('=', '":"') \
+        .replace(',', '", "') \
+        .replace(' ', '') \
+        .replace("'", '') \
+        .replace('\n', '') + '}'
+    )
+    return request.json
+
+def model_training(request):
+    dataset = pd.read_csv(
+        'datasets/training/{}.csv'.format(request.json.get('datasetName'))
+    ) 
+    targets = dataset[request.json.get('targetColumn')].values
+    features = dataset.drop(columns=[request.json.get('targetColumn')]).values
+    model = training(features, targets)
+    pickle.dump(model, open(
+        'models/{}/{}/{}.sav'.format(
+            request.json.get('typeLearning'),
+            request.json.get('model'),
+            request.json.get('modelName')
+        ), 'wb')
+    )
+    request.json['features'] = list(dataset.columns.values)
+    return model_parameters(request)
+
+def model_prediction(request):
+    model = _load_model(request)
+    dataset = pd.read_csv(
+        'datasets/prediction/{}.csv'.format(request.json.get('datasetName'))
+    )
+    predictions = model.predict(dataset.values)
+    request.json['predictions'] = list(predictions)
+    return request.json
