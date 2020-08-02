@@ -4,7 +4,8 @@ from flask import Flask, jsonify, request
 from management.manage import (
     model_parameters,
     model_prediction,
-    model_training
+    model_training,
+    models
 )
 
 app = Flask(__name__)
@@ -26,6 +27,11 @@ def _get_model_parameters():
 @app.route('/model_prediction', methods=['POST'])
 def _get_model_prediction():
     response = model_prediction(request)
+    return jsonify(response)
+
+@app.route('/models', methods=['GET'])
+def _get_models():
+    response = models()
     return jsonify(response)
 
 app.run(host=HOST, port=PORT, debug=True)

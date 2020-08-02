@@ -1,3 +1,4 @@
+import os
 import sys
 sys.path.append('..')
 import json
@@ -52,3 +53,18 @@ def model_prediction(request):
     predictions = model.predict(dataset.values)
     request.json['predictions'] = list(predictions)
     return request.json
+
+def models():
+    files = list()
+    for (dirpath, dirnames, filenames) in os.walk('models'):
+        files += [os.path.join(dirpath, file) for file in filenames if '.sav' in file] 
+    models = []
+    for file in files:
+        file = file.split('/')
+        file = {
+            "typeLearning": file[-3],
+            "model": file[-2],
+            "modelName": file[-1].replace('.sav', ''),
+        }
+        models.append(file)
+    return models
