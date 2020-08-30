@@ -7,8 +7,7 @@ from management.manage import (
     model_parameters,
     model_prediction,
     model_training,
-    models,
-    delete_model
+    delete_model,
     models
 )
 
