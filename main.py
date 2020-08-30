@@ -9,6 +9,7 @@ from management.manage import (
     model_training,
     models,
     delete_model
+    models
 )
 
 app = Flask(__name__)
