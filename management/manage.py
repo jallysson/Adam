@@ -55,9 +55,7 @@ def model_prediction(request):
     )
     predictions = model.predict(dataset.values)
     request.json['predictions'] = list(predictions)
-<<<<<<< Updated upstream
-    return request.json
-=======
+
     return request.json
 
 def models():
@@ -84,4 +82,3 @@ def delete_model(request):
             request.json.get('version')
     ))
     return 'File removed'
->>>>>>> Stashed changes

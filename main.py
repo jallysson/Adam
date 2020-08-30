@@ -6,13 +6,9 @@ from flask_cors import CORS
 from management.manage import (
     model_parameters,
     model_prediction,
-<<<<<<< Updated upstream
-    model_training
-=======
     model_training,
     models,
     delete_model
->>>>>>> Stashed changes
 )
 
 app = Flask(__name__)
@@ -37,8 +33,6 @@ def _post_model_prediction():
     response = model_prediction(request)
     return jsonify(response)
 
-<<<<<<< Updated upstream
-=======
 @app.route('/models', methods=['GET'])
 def _get_models():
     response = models()
@@ -49,5 +43,4 @@ def _post_model():
     response = delete_model(request)
     return jsonify(response)
 
->>>>>>> Stashed changes
 app.run(host=HOST, port=PORT, debug=True)
