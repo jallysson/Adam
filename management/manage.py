@@ -65,7 +65,8 @@ def models():
         files += [os.path.join(dirpath, file) for file in filenames if '.sav' in file] 
     models = []
     for file in files:
-        file = file.split('/')
+        file.replace('/', '\\')
+        file = file.split('\\')
         file = {
             "typeLearning": file[-3],
             "model": file[-2],
