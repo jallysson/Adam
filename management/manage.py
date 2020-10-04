@@ -4,15 +4,19 @@ sys.path.append('..')
 import json
 import pickle
 import pandas as pd
+import dropbox
+from dropbox.files import WriteMode
+from dropbox.exceptions import ApiError, AuthError
+from settings import TOKEN
 from datetime import datetime
 from algorithms.classification.svm import training
 
 def _load_model(request, version=''):
     return pickle.load(open(
         'models/{}/{}/{};{}.sav'.format(
-            request.json.get('typeLearning'),
-            request.json.get('model'),
-            request.json.get('modelName'),
+            request.json.get('typeLearning').lower(),
+            request.json.get('model').lower(),
+            request.json.get('modelName').lower(),
             version
         ),'rb')
     )
@@ -31,23 +35,45 @@ def model_parameters(request, version=''):
     return request.json
 
 def model_training(request):
-    version = datetime.now()
+    version = datetime.now().isoformat()
     dataset = pd.read_csv(
         'datasets/training/{}.csv'.format(request.json.get('datasetName'))
     ) 
     targets = dataset[request.json.get('targetColumn')].values
     features = dataset.drop(columns=[request.json.get('targetColumn')]).values
     model = training(features, targets)
-    pickle.dump(model, open(
-        'models/{}/{}/{};{}.sav'.format(
-            request.json.get('typeLearning'),
-            request.json.get('model'),
-            request.json.get('modelName'),
-            version
-        ), 'wb')
+
+    file = 'models/{}/{}/{};{}.sav'.format(
+        request.json.get('typeLearning').lower(),
+        request.json.get('model').lower(),
+        request.json.get('modelName').lower(),
+        version
     )
+
+    pickle.dump(model, open(file, 'wb'))
+
+    dropbox_path = '/training/{}_{}'.format(
+        file.split(';')[0].replace('/', '_'),
+        file.split('/')[-1]
+    )
+
     request.json['features'] = list(dataset.columns.values)
-    return model_parameters(request, version)
+
+    if upload_model_file_to_dropbox(file, dropbox_path):
+        response = model_parameters(request, version)
+        os.remove(file)       
+        return response
+
+    return 'Model training failure'
+
+def upload_model_file_to_dropbox(file, dropbox_path):
+    dbx = dropbox.Dropbox(TOKEN)
+    with open(file, 'rb') as f:
+        try:
+            dbx.files_upload(f.read(), dropbox_path, mode=WriteMode('overwrite'))
+            return True
+        except ApiError as err:
+            print(err)
 
 def model_prediction(request):
     model = _load_model(request)
@@ -60,19 +86,20 @@ def model_prediction(request):
     return request.json
 
 def models():
-    files = list()
-    for (dirpath, dirnames, filenames) in os.walk('models'):
-        files += [os.path.join(dirpath, file) for file in filenames if '.sav' in file] 
+    dbx = dropbox.Dropbox(TOKEN)
+    files = [entry.name for entry in dbx.files_list_folder('/production').entries]
+    
     models = []
     for file in files:
-        file = file.split('/')
+        file = file.split('_')
         file = {
-            "typeLearning": file[-3],
-            "model": file[-2],
-            "modelName": file[-1].replace('.sav', '').split(';')[0],
+            "typeLearning": file[1],
+            "model": file[2],
+            "modelName": file[-1].replace('.sav', '').split(';')[0].upper(),
             "version": file[-1].replace('.sav', '').split(';')[1]
         }
         models.append(file)
+
     return models
 
 def delete_model(request):
